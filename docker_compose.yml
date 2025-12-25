@@ -1,0 +1,114 @@
+services:
+  # MLflow Tracking Server
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.8.1
+    container_name: mlflow-server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlruns
+      - ./mlartifacts:/mlartifacts
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:///mlruns/mlflow.db
+      --default-artifact-root /mlartifacts
+    networks:
+      - mlops-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # API de Serving (Version 1)
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.serve
+    container_name: fraud-api
+    ports:
+      - "8000:8000"
+    environment:
+      - MODEL_VERSION=v1
+      - MODEL_PATH=models/fraud_model_v1.pkl
+    volumes:
+      - ./models:/app/models:ro
+      - ./logs:/app/logs
+    depends_on:
+      - mlflow
+    networks:
+      - mlops-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Container d'entraînement (on-demand)
+  training:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.train
+    container_name: fraud-training
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./mlruns:/mlruns
+      - ./mlartifacts:/mlartifacts
+    depends_on:
+      - mlflow
+    networks:
+      - mlops-network
+    profiles:
+      - training  # Ne démarre pas automatiquement
+
+  # Prometheus (Monitoring - Optionnel)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - mlops-network
+    profiles:
+      - monitoring
+
+  # Grafana (Monitoring - Optionnel)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - mlops-network
+    profiles:
+      - monitoring
+
+networks:
+  mlops-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:

@@ -1,0 +1,47 @@
+baseline:
+  n_estimators: 100
+  max_depth: 10
+  min_samples_split: 2
+  min_samples_leaf: 1
+  random_state: 42
+  class_weight: "balanced"
+  n_jobs: -1
+
+variation_1:
+  n_estimators: 50
+  max_depth: 5
+  min_samples_split: 5
+  min_samples_leaf: 2
+  random_state: 42
+  class_weight: "balanced"
+  n_jobs: -1
+
+variation_2:
+  n_estimators: 200
+  max_depth: 15
+  min_samples_split: 2
+  min_samples_leaf: 1
+  random_state: 42
+  class_weight: "balanced"
+  n_jobs: -1
+
+optuna_search_space:
+  n_estimators:
+    type: "int"
+    low: 50
+    high: 300
+  max_depth:
+    type: "int"
+    low: 5
+    high: 30
+  min_samples_split:
+    type: "int"
+    low: 2
+    high: 10
+  min_samples_leaf:
+    type: "int"
+    low: 1
+    high: 5
+  class_weight:
+    type: "categorical"
+    choices: ["balanced", null]

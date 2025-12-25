@@ -1,0 +1,42 @@
+FROM python:3.9-slim
+
+# Métadonnées
+LABEL maintainer="hamrouniraed50@gmail.com"
+LABEL description="Fraud Detection API Serving Container"
+
+# Variables d'environnement
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV MODEL_VERSION=v1
+
+# Créer un utilisateur non-root pour la sécurité
+RUN useradd -m -u 1000 apiuser
+
+# Créer le répertoire de travail
+WORKDIR /app
+
+# Copier les requirements
+COPY requirements-serve.txt .
+
+# Installer les dépendances
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements-serve.txt
+
+# Copier le code source
+COPY src/serving/ ./src/serving/
+
+# Créer le répertoire des modèles
+RUN mkdir -p models && chown -R apiuser:apiuser /app
+
+# Changer vers l'utilisateur non-root
+USER apiuser
+
+# Exposer le port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health')"
+
+# Commande par défaut
+CMD ["uvicorn", "src.serving.api:app", "--host", "0.0.0.0", "--port", "8000"]

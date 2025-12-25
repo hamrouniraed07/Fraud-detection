@@ -462,13 +462,6 @@ This project is under MIT license. See the `LICENSE` file for details.
 - **Supervisor** : Mr. Salah GONTARA
 - **Institution** : Polytech
 
-## 📞 Support
-
-For any questions or issues:
-- **Email** : your.email@polytech.edu
-- **Issues** : GitHub Issues
-- **Documentation** : Project Wiki
-
 ---
 
 ## 🚀 Quick Start

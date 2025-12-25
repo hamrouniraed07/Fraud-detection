@@ -1,0 +1,38 @@
+FROM python:3.9-slim
+
+# Métadonnées
+LABEL maintainer="hamrouniraed50@gmail.com"
+LABEL description="Fraud Detection Training Container"
+
+# Variables d'environnement
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Installer les dépendances système
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Créer le répertoire de travail
+WORKDIR /app
+
+# Copier les fichiers de requirements
+COPY requirements.txt .
+COPY requirements-dev.txt .
+
+# Installer les dépendances Python
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-dev.txt
+
+# Copier le code source
+COPY src/ ./src/
+COPY configs/ ./configs/
+COPY pipelines/ ./pipelines/
+
+# Créer les répertoires nécessaires
+RUN mkdir -p data/raw data/processed models logs
+
+# Point d'entrée par défaut
+CMD ["python", "src/training/train_mlflow.py"]
