@@ -43,9 +43,6 @@ fraud-detection-mlops/
 │   ├── rollback.sh              # Rollback
 │   ├── test_api.py              # API tests
 │   └── setup_dvc.sh             # DVC setup
-├── notebooks/                    # Jupyter notebooks
-│   ├── 01_exploration.ipynb     # Data exploration
-│   └── 02_baseline.ipynb        # Baseline model
 └── data/                         # Data
     ├── raw/                      # Raw data
     └── processed/                # Processed data
