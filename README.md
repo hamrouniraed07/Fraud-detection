@@ -449,15 +449,6 @@ pre-commit run --all-files
 - Validate all user inputs
 - Secure logging without sensitive data
 
-## 📝 License
-
-This project is under MIT license. See the `LICENSE` file for details.
-
-## 👥 Team
-
-- **Main Developer** : Raed Mohamed Amine Hamrouni | Wiem Hemdi
-- **Supervisor** : Mr. Salah GONTARA
-- **Institution** : Polytech
 
 ## 📸 Project Demonstration
 
@@ -781,4 +772,14 @@ curl http://localhost:8000/health
 
 ---
 
-*This README was automatically generated for the fraud detection MLOps project - Version 1.0.0*
+## 📝 License
+
+This project is under MIT license. See the `LICENSE` file for details.
+
+## 👥 Team
+
+- **Main Developer** : Raed Mohamed Amine Hamrouni | Wiem Hemdi
+- **Supervisor** : Mr. Salah GONTARA
+- **Institution** : Polytech
+
+---
