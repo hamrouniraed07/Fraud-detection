@@ -232,8 +232,6 @@ curl -X POST "http://localhost:8000/predict" \
 # Déploiement
 ./scripts/deploy.sh
 
-# Rollback en cas de problème
-./scripts/rollback.sh
 ```
 
 ### Déploiement avec Docker
