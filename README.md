@@ -468,11 +468,11 @@ This section showcases the complete MLOps workflow through step-by-step screensh
 The following screenshots demonstrate the complete MLOps pipeline from data exploration to deployment:
 
 #### 1. Data Exploration & Initial Setup
-![Data Exploration](screenshots/Screenshot%20from%202025-12-17%2010-11-04.png)
+![Data Exploration](screenshots/01_data_exploration.png)
 *Initial data exploration and project setup phase showing the raw credit card fraud dataset analysis and configuration.*
 
 #### 2. Model Training Pipeline
-![Model Training](screenshots/Screenshot%20from%202025-12-17%2010-11-10.png)
+![Model Training](screenshots/02_model_training.png)
 *Model training pipeline execution showing the ZenML pipeline running with data preprocessing, training, and evaluation steps.*
 
 #### 3. MLflow Experiment Tracking
