@@ -31,7 +31,6 @@ data/processed/*.csv
 *.hdf5
 
 # Models (tracked by DVC)
-models/*.pkl
 models/*.joblib
 models/*.h5
 
