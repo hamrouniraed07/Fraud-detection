@@ -26,7 +26,6 @@ build/
 # Data (tracked by DVC)
 data/raw/*.csv
 data/processed/*.csv
-*.pkl
 *.h5
 *.hdf5
 
