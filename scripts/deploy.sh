@@ -8,6 +8,12 @@
 
 set -e  # Exit on error
 
+# Get the directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Change to the parent directory (project root)
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
+
 # Couleurs pour l'output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -66,8 +72,10 @@ fi
 
 # Arrêter le conteneur existant
 log_info "Arrêt du conteneur existant..."
-docker-compose stop api 2>/dev/null || true
-docker-compose rm -f api 2>/dev/null || true
+set +e  # Temporarily disable exit on error for cleanup
+docker ps -a --filter "name=fraud-api" --format "{{.ID}}" | xargs -r sudo docker rm -f 2>/dev/null
+docker-compose down 2>/dev/null || true
+set -e  # Re-enable exit on error
 
 # Définir les variables d'environnement
 export MODEL_VERSION=$VERSION
@@ -125,7 +133,7 @@ echo "$HEALTH_RESPONSE" | jq .
 
 # Test de prédiction
 log_info "Test de prédiction..."
-TEST_DATA='{"features": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 100.0]}'
+TEST_DATA='{"features": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 100.0, 0.0]}'
 
 PREDICTION_RESPONSE=$(curl -s -X POST "${API_URL}/predict" \
     -H "Content-Type: application/json" \

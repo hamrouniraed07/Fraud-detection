@@ -51,22 +51,22 @@ app.add_middleware(
 MODEL = None
 MODEL_VERSION = os.getenv("MODEL_VERSION", "v1")
 MODEL_PATH = os.getenv("MODEL_PATH", f"models/fraud_model_{MODEL_VERSION}.pkl")
-FEATURE_NAMES = [f"V{i}" for i in range(1, 29)] + ["Amount"]
+FEATURE_NAMES = [f"V{i}" for i in range(1, 29)] + ["Amount", "Time"]
 
 
 class Transaction(BaseModel):
     """Modèle de données pour une transaction."""
     features: List[float] = Field(
         ..., 
-        description="Liste de 29 features (V1-V28 + Amount)",
-        min_items=29,
-        max_items=29
+        description="Liste de 30 features (V1-V28 + Amount + Time)",
+        min_items=30,
+        max_items=30
     )
     
     @validator('features')
     def validate_features(cls, v):
-        if len(v) != 29:
-            raise ValueError(f"Expected 29 features, got {len(v)}")
+        if len(v) != 30:
+            raise ValueError(f"Expected 30 features, got {len(v)}")
         if not all(isinstance(x, (int, float)) for x in v):
             raise ValueError("All features must be numeric")
         return v
@@ -158,7 +158,7 @@ async def health_check():
 
 @app.post("/predict", response_model=PredictionResponse, tags=["Prediction"])
 @prediction_latency.time()
-async def predict(transaction: Transaction):
+def predict(transaction: Transaction):
     """
     Prédit si une transaction est frauduleuse.
     

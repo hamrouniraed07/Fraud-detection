@@ -693,7 +693,7 @@ curl -X POST "http://localhost:8000/predict" \
 
 ### Phase 6: Deployment & Production
 
-![Step 6: Production Deployment](screenshots/Screenshot%20from%202025-12-17%2011-36-33.png)
+![Step 6: Production Deployment](screenshots/Deploiement.png)
 
 #### What Happens in This Step:
 1. **Docker Containerization**: Application is packaged in containers
@@ -781,5 +781,21 @@ This project is under MIT license. See the `LICENSE` file for details.
 - **Main Developer** : Raed Mohamed Amine Hamrouni | Wiem Hemdi
 - **Supervisor** : Mr. Salah GONTARA
 - **Institution** : Polytech
+
+---
+
+## ✅ Déploiement Effectué
+
+Le déploiement de l'application a été réalisé avec succès via le script `deploy.sh` :
+
+```bash
+./scripts/deploy.sh
+```
+
+Ce script automatise l'ensemble du processus de déploiement :
+- Construction des images Docker
+- Lancement des conteneurs
+- Vérification de l'état des services
+- Tests de connectivité
 
 ---
