@@ -40,7 +40,6 @@ fraud-detection-mlops/
 │   └── test_model.py            # Model tests
 ├── scripts/                      # Utility scripts
 │   ├── deploy.sh                # Deployment
-│   ├── rollback.sh              # Rollback
 │   ├── test_api.py              # API tests
 │   └── setup_dvc.sh             # DVC setup
 └── data/                         # Data
