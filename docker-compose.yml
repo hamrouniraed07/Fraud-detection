@@ -69,7 +69,7 @@ services:
     profiles:
       - training  # Ne démarre pas automatiquement
 
-  # Prometheus (Monitoring - Optionnel)
+  # Prometheus (Monitoring)
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -83,10 +83,9 @@ services:
       - '--storage.tsdb.path=/prometheus'
     networks:
       - mlops-network
-    profiles:
-      - monitoring
+    restart: unless-stopped
 
-  # Grafana (Monitoring - Optionnel)
+  # Grafana (Monitoring)
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -97,13 +96,12 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana:/etc/grafana/provisioning
+      - ./monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/fraud-detection.json
     depends_on:
       - prometheus
     networks:
       - mlops-network
-    profiles:
-      - monitoring
+    restart: unless-stopped
 
 networks:
   mlops-network:

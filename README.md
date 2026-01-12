@@ -354,19 +354,120 @@ export API_PORT="8000"
 
 ## 📈 Monitoring and Metrics
 
-### Available Metrics
-- **Predictions per minute**
-- **Average response time**
-- **Model accuracy**
-- **Detected fraud rate**
+### Monitoring Stack
 
-### Access Metrics
+Le projet inclut une stack de monitoring complète avec **Prometheus** et **Grafana**:
+
+#### Architecture de Monitoring
+```
+┌─────────────┐      ┌──────────────┐      ┌─────────────┐
+│  Fraud API  │─────▶│  Prometheus  │─────▶│   Grafana   │
+│  (metrics)  │      │  (collecte)  │      │ (visualize) │
+└─────────────┘      └──────────────┘      └─────────────┘
+```
+
+### Démarrer le Monitoring
+
 ```bash
-# Prometheus metrics
+# Démarrer tous les services incluant monitoring
+docker-compose up -d
+
+# Vérifier les services
+docker-compose ps
+```
+
+### Accéder aux Services
+
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| **API Docs** | http://localhost:8000/docs | - |
+| **Prometheus** | http://localhost:9090 | - |
+| **Grafana** | http://localhost:3000 | admin/admin |
+| **MLflow** | http://localhost:5000 | - |
+
+### Métriques Disponibles
+
+L'API expose automatiquement ces métriques Prometheus:
+
+#### 1. Compteurs (Counters)
+- **`predictions_total`** : Nombre total de prédictions
+  - Labels: `model_version`, `prediction` (fraud/legitimate)
+- **`prediction_errors_total`** : Nombre total d'erreurs
+  - Labels: `error_type`
+
+#### 2. Histogrammes (Histograms)
+- **`prediction_latency_seconds`** : Temps de réponse des prédictions
+  - Buckets: latence en secondes
+
+### Requêtes Prometheus Utiles
+
+```promql
+# Taux de prédictions par seconde
+rate(predictions_total[5m])
+
+# Latence moyenne
+rate(prediction_latency_seconds_sum[5m]) / rate(prediction_latency_seconds_count[5m])
+
+# Taux d'erreurs
+rate(prediction_errors_total[5m])
+
+# Pourcentage de fraudes détectées
+sum(rate(predictions_total{prediction="fraud"}[5m])) / sum(rate(predictions_total[5m])) * 100
+```
+
+### Configuration Grafana
+
+1. **Première connexion**:
+   - URL: http://localhost:3000
+   - Username: `admin`
+   - Password: `admin`
+   - Changer le mot de passe à la première connexion
+
+2. **Ajouter Prometheus comme source**:
+   - Configuration → Data Sources → Add data source
+   - Sélectionner Prometheus
+   - URL: `http://prometheus:9090`
+   - Cliquer sur "Save & Test"
+
+3. **Importer le dashboard**:
+   - Le fichier `monitoring/grafana-dashboard.json` contient un dashboard pré-configuré
+   - Dashboards → Import → Upload JSON file
+
+### Dashboard Grafana - Métriques Clés
+
+Le dashboard inclut:
+
+- **📊 Total Predictions**: Nombre total de prédictions depuis le démarrage
+- **📈 Prediction Rate**: Taux de prédictions par seconde
+- **⏱️ Average Latency**: Temps de réponse moyen
+- **❌ Error Rate**: Taux d'erreurs par minute
+- **🔴 Fraud Detection Rate**: Pourcentage de fraudes détectées
+- **📉 Response Time Distribution**: Distribution des temps de réponse
+
+### Monitoring en Production
+
+```bash
+# Logs en temps réel
+docker-compose logs -f api
+
+# Métriques brutes
 curl http://localhost:8000/metrics
 
-# MLflow UI
-# http://localhost:5000
+# Santé de l'API
+curl http://localhost:8000/health
+
+# Statistiques Prometheus
+curl http://localhost:9090/api/v1/query?query=up
+```
+
+### Arrêter le Monitoring
+
+```bash
+# Arrêter tous les services
+docker-compose down
+
+# Arrêter en conservant les volumes (données)
+docker-compose down --volumes
 ```
 
 ## 🧪 Testing and Validation
