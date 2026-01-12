@@ -2,6 +2,7 @@
 pytest==7.4.3
 pytest-cov==4.1.0
 requests==2.31.0
+httpx<0.25.0
 
 # Linting & Formatting
 flake8==6.1.0
