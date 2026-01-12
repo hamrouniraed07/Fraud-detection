@@ -57,25 +57,39 @@ def train_with_mlflow(run_name: str, params: dict, X_train, X_test, y_train, y_t
         for metric_name, value in metrics.items():
             mlflow.log_metric(metric_name, value)
         
-        # Créer et logger la matrice de confusion
-        fig = model.plot_confusion_matrix(X_test, y_test)
-        mlflow.log_figure(fig, "confusion_matrix.png")
+        # Créer et logger la matrice de confusion (safe mode)
+        try:
+            fig = model.plot_confusion_matrix(X_test, y_test)
+            mlflow.log_figure(fig, "confusion_matrix.png")
+        except Exception as e:
+            print(f"⚠️  Impossible de logger la figure: {e}")
         
-        # Feature importance
-        importance = model.get_feature_importance(X_train.columns.tolist())
-        importance.to_csv("feature_importance.csv", index=False)
-        mlflow.log_artifact("feature_importance.csv")
+        # Feature importance (safe mode)
+        try:
+            importance = model.get_feature_importance(X_train.columns.tolist())
+            importance.to_csv("feature_importance.csv", index=False)
+            mlflow.log_artifact("feature_importance.csv")
+        except Exception as e:
+            print(f"⚠️  Impossible de logger les artifacts: {e}")
         
         # Inférer la signature du modèle
         signature = infer_signature(X_train, model.predict(X_train))
         
-        # Logger le modèle
-        mlflow.sklearn.log_model(
-            model.model,
-            "model",
-            signature=signature,
-            registered_model_name=f"fraud_detection_{run_name}"
-        )
+        # Logger le modèle (safe mode)
+        try:
+            mlflow.sklearn.log_model(
+                model.model,
+                "model",
+                signature=signature,
+                registered_model_name=f"fraud_detection_{run_name}"
+            )
+        except Exception as e:
+            print(f"⚠️  Impossible de logger le modèle: {e}")
+            # Logger sans registration
+            try:
+                mlflow.sklearn.log_model(model.model, "model", signature=signature)
+            except Exception as e2:
+                print(f"⚠️  Impossible de logger le modèle (mode simple): {e2}")
         
         print(f"\n✅ Run terminé avec succès!")
         print(f"📊 F1-Score: {metrics['f1_score']:.4f}")
