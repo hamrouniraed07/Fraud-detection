@@ -221,9 +221,110 @@ curl -X POST "http://localhost:8000/predict" \
 }
 ```
 
-## 🐳 Deployment
+## � CI/CD Pipeline
 
-### Manual Deployment
+### GitHub Actions Workflow
+
+The project includes an automated **CI/CD pipeline** that:
+
+1. **Tests** - Runs on every push to `main` branch
+   - Installs dependencies (Python 3.11)
+   - Executes unit tests with pytest
+   - Generates code coverage reports
+   - Validates API and model functionality
+
+2. **Deploy** - Runs after tests pass (main branch only)
+   - Builds Docker image for the serving API
+   - Validates image integrity
+   - Ready for production deployment
+
+### Workflow File
+```
+.github/workflows/ci.yml
+```
+
+### Running Tests Locally
+
+Before pushing, run tests locally:
+```bash
+# Install test dependencies
+pip install -r requirements-dev.txt
+
+# Run all tests
+pytest --maxfail=1 --disable-warnings
+
+# With coverage report
+pytest --cov=src --cov-report=html tests/
+
+# Run specific test file
+pytest tests/test_api.py -v
+pytest tests/test_model.py -v
+```
+
+### Test Coverage
+
+The CI/CD pipeline enforces:
+- **27 total tests** (API + Model)
+- **Coverage report** for src/ directory
+- **Warnings disabled** for cleaner output
+
+### Continuous Integration
+
+**Triggered on:**
+- Push to `main` or `master` branch
+- Pull requests to `main` or `master`
+
+**Steps:**
+1. Checkout code
+2. Setup Python 3.11
+3. Cache dependencies
+4. Install requirements
+5. Run pytest with coverage
+6. Build Docker image
+7. Report results
+
+### Docker Build in CI/CD
+
+The deploy job:
+- Uses Docker Buildx for multi-platform builds
+- Caches layers for faster builds
+- Tags images with `latest` and commit SHA
+- Ready for registry push when credentials are configured
+
+### View Results
+
+Check CI/CD status in GitHub:
+```
+Repository → Actions → CI/CD
+```
+
+Each workflow run shows:
+- ✅ Test results
+- 📊 Coverage percentage
+- 🐳 Docker build status
+- 📝 Detailed logs
+
+### Configuring Secrets (Optional)
+
+To enable Docker Hub push:
+
+1. Go to **Repository Settings → Secrets and variables → Actions**
+2. Add secrets:
+   - `DOCKER_USERNAME`: Your Docker Hub username
+   - `DOCKER_PASSWORD`: Your Docker Hub token/password
+
+3. Update workflow to push:
+   ```yaml
+   - name: Log in to Docker Hub
+     uses: docker/login-action@v3
+     with:
+       username: ${{ secrets.DOCKER_USERNAME }}
+       password: ${{ secrets.DOCKER_PASSWORD }}
+   ```
+
+### 🐳 Deployment
+
+## Manual Deployment
 ```bash
 # Deployment
 ./scripts/deploy.sh
