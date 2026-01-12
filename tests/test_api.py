@@ -26,7 +26,7 @@ def mock_model(tmp_path):
     model = RandomForestClassifier(n_estimators=10, random_state=42)
     
     # Entraîner sur des données factices
-    X_dummy = np.random.rand(100, 29)
+    X_dummy = np.random.rand(100, 30)
     y_dummy = np.random.randint(0, 2, 100)
     model.fit(X_dummy, y_dummy)
     
@@ -39,10 +39,25 @@ def mock_model(tmp_path):
 
 @pytest.fixture
 def valid_transaction():
-    """Fixture pour une transaction valide."""
+    """Fixture pour une transaction valide (30 features)."""
     return {
-        "features": [0.0] * 29
+        "features": [0.0] * 30
     }
+
+
+@pytest.fixture
+def load_mock_model(mock_model):
+    """Charge le modèle factice dans le module API."""
+    import src.serving.api as api_module
+
+    api_module.MODEL_PATH = mock_model
+    api_module.MODEL_VERSION = "test"
+    api_module.MODEL = None
+    api_module.load_model()
+
+    yield
+
+    api_module.MODEL = None
 
 
 def test_root_endpoint(client):
@@ -67,15 +82,8 @@ def test_health_endpoint(client):
     assert "timestamp" in data
 
 
-def test_predict_valid_transaction(client, valid_transaction, monkeypatch, mock_model):
+def test_predict_valid_transaction(client, valid_transaction, load_mock_model):
     """Test de prédiction avec une transaction valide."""
-    # Mock le chargement du modèle
-    import src.serving.api as api_module
-    monkeypatch.setenv("MODEL_PATH", mock_model)
-    
-    # Charger le modèle
-    api_module.load_model()
-    
     response = client.post("/predict", json=valid_transaction)
     assert response.status_code == 200
     
@@ -95,7 +103,7 @@ def test_predict_valid_transaction(client, valid_transaction, monkeypatch, mock_
 def test_predict_invalid_features_count(client):
     """Test avec un mauvais nombre de features."""
     invalid_transaction = {
-        "features": [0.0] * 20  # Seulement 20 au lieu de 29
+        "features": [0.0] * 20  # Seulement 20 au lieu de 30
     }
     
     response = client.post("/predict", json=invalid_transaction)
@@ -105,20 +113,15 @@ def test_predict_invalid_features_count(client):
 def test_predict_invalid_feature_type(client):
     """Test avec des features non numériques."""
     invalid_transaction = {
-        "features": ["invalid"] * 29
+        "features": ["invalid"] * 30
     }
     
     response = client.post("/predict", json=invalid_transaction)
     assert response.status_code == 422
 
 
-def test_predict_batch(client, valid_transaction, monkeypatch, mock_model):
+def test_predict_batch(client, valid_transaction, load_mock_model):
     """Test de prédiction en batch."""
-    monkeypatch.setenv("MODEL_PATH", mock_model)
-    
-    import src.serving.api as api_module
-    api_module.load_model()
-    
     transactions = [valid_transaction] * 5
     
     response = client.post("/predict/batch", json=transactions)
@@ -131,13 +134,8 @@ def test_predict_batch(client, valid_transaction, monkeypatch, mock_model):
     assert len(data["predictions"]) == 5
 
 
-def test_model_info(client, monkeypatch, mock_model):
+def test_model_info(client, load_mock_model):
     """Test du endpoint model info."""
-    monkeypatch.setenv("MODEL_PATH", mock_model)
-    
-    import src.serving.api as api_module
-    api_module.load_model()
-    
     response = client.get("/model/info")
     assert response.status_code == 200
     
@@ -164,28 +162,18 @@ def test_predict_without_model(client, valid_transaction):
     assert response.status_code == 503  # Service unavailable
 
 
-def test_confidence_levels(client, monkeypatch, mock_model):
+def test_confidence_levels(client, load_mock_model):
     """Test des niveaux de confiance."""
-    monkeypatch.setenv("MODEL_PATH", mock_model)
-    
-    import src.serving.api as api_module
-    api_module.load_model()
-    
-    response = client.post("/predict", json={"features": [0.0] * 29})
+    response = client.post("/predict", json={"features": [0.0] * 30})
     data = response.json()
     
     assert data["confidence"] in ["low", "medium", "high"]
 
 
 @pytest.mark.parametrize("feature_value", [0.0, 1.0, -1.0, 100.0])
-def test_various_feature_values(client, monkeypatch, mock_model, feature_value):
+def test_various_feature_values(client, load_mock_model, feature_value):
     """Test avec différentes valeurs de features."""
-    monkeypatch.setenv("MODEL_PATH", mock_model)
-    
-    import src.serving.api as api_module
-    api_module.load_model()
-    
-    transaction = {"features": [feature_value] * 29}
+    transaction = {"features": [feature_value] * 30}
     response = client.post("/predict", json=transaction)
     
     assert response.status_code == 200
