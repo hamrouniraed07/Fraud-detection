@@ -61,13 +61,22 @@ fraud-detection-mlops/
 - **Health checks** and Prometheus metrics
 - **Data validation** with Pydantic
 
-### 3. Optimization
+### 3. Monitoring Stack 📈
+- **Prometheus** - Real-time metrics collection (every 10s)
+- **Grafana** - Beautiful dashboards with 7+ panels
+- **MLflow UI** - Experiment tracking and model registry
+- **Performance Metrics** - Latency, throughput, error rates
+- **Live Alerts** - Configurable thresholds and notifications
+- **Data Export** - Export metrics for offline analysis
+
+### 4. Optimization
 - **Optuna hyperparameter optimization**
 - **Results visualization**
 - **Model comparison**
 
-### 4. Deployment
+### 5. Deployment
 - **Docker containerization** for training and service
+- **Docker Compose** for multi-service orchestration
 - **Automated deployment scripts**
 - **Integration testing** with pytest
 - **Rollback** in case of issues
@@ -354,17 +363,72 @@ export API_PORT="8000"
 
 ## 📈 Monitoring and Metrics
 
+### 🎯 Quick Access - Services d'Accès
+
+| Service | URL | Port | Credentials | Description |
+|---------|-----|------|-------------|-------------|
+| **API Swagger** | http://localhost:8000/docs | 8000 | - | Interactive API documentation |
+| **API Health** | http://localhost:8000/health | 8000 | - | API health check |
+| **Prometheus** | http://localhost:9090 | 9090 | - | Metrics database & explorer |
+| **Grafana** | http://localhost:3000 | 3000 | admin/admin | Dashboard visualization |
+| **MLflow** | http://localhost:5000 | 5000 | - | Experiment tracking |
+| **Raw Metrics** | http://localhost:8000/metrics | 8000 | - | Prometheus format metrics |
+
 ### Monitoring Stack
 
 Le projet inclut une stack de monitoring complète avec **Prometheus** et **Grafana**:
 
-#### Architecture de Monitoring
+#### 🏗️ Architecture de Monitoring Complète
+
 ```
-┌─────────────┐      ┌──────────────┐      ┌─────────────┐
-│  Fraud API  │─────▶│  Prometheus  │─────▶│   Grafana   │
-│  (metrics)  │      │  (collecte)  │      │ (visualize) │
-└─────────────┘      └──────────────┘      └─────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    CLIENT REQUESTS                          │
+└──────────────┬──────────────────────────────┬───────────────┘
+               │                              │
+       ┌───────▼────────┐          ┌──────────▼────────┐
+       │   Fraud API    │          │   MLflow Server   │
+       │  (FastAPI)     │          │   (Tracking)      │
+       │  Port: 8000    │          │   Port: 5000      │
+       └───────┬────────┘          └──────────────────┘
+               │
+        ┌──────▼───────┐
+        │  Prometheus  │  ◄──── Scrape every 10s
+        │ Metrics Db   │         /metrics endpoint
+        │ Port: 9090   │
+        └──────┬───────┘
+               │
+        ┌──────▼────────┐
+        │    Grafana    │  ◄──── Query Prometheus
+        │  Dashboards   │         Beautiful UI
+        │ Port: 3000    │
+        │ admin/admin   │
+        └───────────────┘
 ```
+
+#### 📋 Stack Services Détails
+
+- **API** (FastAPI)
+  - Expose endpoint `/metrics` en format Prometheus
+  - Collecte les métriques de prédictions
+  - Port interne: 8000
+
+- **Prometheus**
+  - Scrape les métriques toutes les 10 secondes
+  - Stockage TSDB (Time Series Database)
+  - Requête en PromQL
+  - Port: 9090
+
+- **Grafana**
+  - Visualisation des données Prometheus
+  - Dashboards pré-configurés
+  - Alertes et notifications
+  - Port: 3000 (admin/admin)
+
+- **MLflow**
+  - Tracking des expériences d'entraînement
+  - Versioning des modèles
+  - Stockage des artifacts
+  - Port: 5000
 
 ### Démarrer le Monitoring
 
@@ -460,6 +524,130 @@ curl http://localhost:8000/health
 curl http://localhost:9090/api/v1/query?query=up
 ```
 
+### Dashboard Grafana Pré-configuré
+
+Un **dashboard complet** est fourni dans `monitoring/dashboards/fraud-detection-dashboard.json` avec les panneaux suivants:
+
+#### 📊 Panneaux du Dashboard
+1. **Total Predictions by Type** (Pie Chart)
+   - Distribution des prédictions fraude vs légitime
+   
+2. **Total Predictions** (Stat Card)
+   - Nombre total de prédictions cumulées
+   
+3. **Prediction Rate** (Time Series)
+   - Taux de prédictions par 5 minutes
+   - Visualise les pics d'utilisation
+   
+4. **Prediction Latency Percentiles** (Time Series)
+   - P50, P95, P99 de la latence
+   - Analyse des performances en temps réel
+   
+5. **Fraud Detection Rate** (Stat Card)
+   - Pourcentage de fraudes détectées
+   - Indicateur clé de performance
+   
+6. **Error Rate** (Bar Chart)
+   - Taux d'erreurs par type
+   - Monitoring de la stabilité
+   
+7. **Total Errors** (Stat Card)
+   - Nombre d'erreurs par minute
+   - Alerte sur anomalies
+
+#### 🔧 Importer le Dashboard
+
+```bash
+# Méthode 1 : Via script automatisé
+bash scripts/import_grafana_dashboard.sh
+
+# Méthode 2 : Manuel dans l'interface
+# 1. Aller à Dashboards → Import
+# 2. Upload JSON file → monitoring/dashboards/fraud-detection-dashboard.json
+# 3. Cliquer Import
+```
+
+### Alertes et Seuils Recommandés
+
+Configurer les alertes Grafana pour:
+
+```yaml
+Alertes Suggérées:
+- Error Rate > 5% → 🔴 CRITICAL
+- Latency P95 > 100ms → 🟡 WARNING
+- Fraud Detection Rate < 50% → 🟡 WARNING
+- Predictions = 0 (5 min) → 🔴 CRITICAL
+```
+
+### Requêtes PromQL Avancées
+
+```promql
+# Taux de prédictions/minute
+rate(predictions_total[1m])
+
+# Latence P99
+histogram_quantile(0.99, rate(prediction_latency_seconds_bucket[5m]))
+
+# Taux d'erreurs en pourcentage
+(rate(prediction_errors_total[5m]) / rate(predictions_total[5m]) * 100)
+
+# Fraudes détectées par heure
+increase(predictions_total{prediction="fraud"}[1h])
+
+# Uptime de l'API (dernière fois where = 1)
+up{job="api"}
+```
+
+### Logs de Monitoring
+
+```bash
+# Logs Prometheus
+docker-compose logs -f prometheus
+
+# Logs Grafana
+docker-compose logs -f grafana
+
+# Logs API (avec métriques)
+docker-compose logs -f api | grep -E "prediction|error|latency"
+
+# Vérifier le scraping Prometheus
+curl http://localhost:9090/api/v1/targets
+```
+
+### Troubleshooting Monitoring
+
+**Prometheus ne scrape pas les métriques?**
+```bash
+# Vérifier la config Prometheus
+curl http://localhost:9090/api/v1/config
+
+# Vérifier les targets
+curl http://localhost:9090/api/v1/targets | jq '.data.activeTargets'
+```
+
+**Grafana ne trouve pas Prometheus?**
+```bash
+# Vérifier la connexion depuis Grafana
+docker exec grafana curl http://prometheus:9090
+
+# Vérifier les datasources
+curl http://localhost:3000/api/datasources
+```
+
+**Le dashboard n'affiche rien?**
+```bash
+# 1. Générer des prédictions
+python scripts/test_api.py
+
+# 2. Attendre 10s (intervalle de scrape)
+sleep 10
+
+# 3. Vérifier les métriques
+curl http://localhost:8000/metrics | grep predictions_total
+
+# 4. Rafraîchir le dashboard (F5)
+```
+
 ### Arrêter le Monitoring
 
 ```bash
@@ -468,6 +656,24 @@ docker-compose down
 
 # Arrêter en conservant les volumes (données)
 docker-compose down --volumes
+
+# Arrêter un service spécifique
+docker-compose stop prometheus
+docker-compose stop grafana
+```
+
+### Exporter les Données de Monitoring
+
+```bash
+# Exporter les métriques historiques depuis Prometheus
+curl -G 'http://localhost:9090/api/v1/query_range' \
+  --data-urlencode 'query=predictions_total' \
+  --data-urlencode 'start=2026-01-12T00:00:00Z' \
+  --data-urlencode 'end=2026-01-13T00:00:00Z' \
+  --data-urlencode 'step=60s' > metrics_export.json
+
+# Exporter les snapshots Grafana
+# Menu Grafana → Dashboard → Export as JSON
 ```
 
 ## 🧪 Testing and Validation
